@@ -712,10 +712,28 @@ m2 (BoolPair x y) = if x == y then (Right x) else (Right True)
 Show the isomorphism between $Maybe \ a$ and $Either \ () \ a$.
 \end{exercise}
 
-\begin{proof}[Solution]	
+\begin{proof}[Solution]
+~\\	
+\begin{lstlisting}[language=Haskell]
+maybeToEither :: Maybe a -> Either () a
+maybeToEither (Just a) = Right a
+maybeToEither Nothing = Left ()
 
-
+eitherToMaybe :: Either () a -> Maybe a
+eitherToMaybe  (Right a) = Just a
+eitherToMaybe  (Left ()) = Nothing
+\end{lstlisting}
 \end{proof}
+
+
+\begin{exercise}
+Here’s a sum type defined in Haskell: 
+\begin{lstlisting}[language=Haskell]
+data Shape = Circle Float | Rect Float Float
+\end{lstlisting}
+
+\end{exercise}
+
 
 
 \end{document}
