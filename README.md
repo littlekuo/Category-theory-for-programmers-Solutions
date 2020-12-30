@@ -1,6 +1,6 @@
 # Category-theory-for-programmers-Solutions
 Category theory for programmers Solutions
-
+[](https://yuchengg.com/files/ctfp.pdf)
 
 - [x] chapter 1
 - [x] chapter 2
