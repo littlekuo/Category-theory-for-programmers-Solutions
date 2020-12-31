@@ -731,9 +731,426 @@ Here’s a sum type defined in Haskell:
 \begin{lstlisting}[language=Haskell]
 data Shape = Circle Float | Rect Float Float
 \end{lstlisting}
-
+When we want to define a function like area that acts on a Shape,
+we do it by pattern matching on the two constructors
+\begin{lstlisting}[language=Haskell]
+area :: Shape -> Float
+area (Circle r) = pi * r * r
+area (Rect d h) = d * h
+\end{lstlisting}
+Implement Shape in C++ or Java as an interface and create two
+classes: Circle and Rect. Implement area as a virtual function.
 \end{exercise}
 
+\begin{proof}[Solution]
+~\\
+\begin{lstlisting}[language=C++]
+class Shape {
+public:
+  virtual double area() const = 0;
+};
+class Circle : public Shape {
+  double r;
+public:
+  Circle(double _r): r(_r){}
+  virtual double area() const override{
+     return M_PI*r*r;
+  }
+};
+class React : public Shape { 
+  double d,h;
+public:
+  React(double _d, double _h): d(_d), h(_h){}
+  virtual double area() const override{
+    return h*d;
+  }
+};
+\end{lstlisting}
+\end{proof}
+
+
+\begin{exercise}
+Continuing with the previous example: We can easily add a new
+function $circ$ that calculates the circumference of a $Shape$. We
+can do it without touching the definition of $Shape$:
+\begin{lstlisting}[language=Haskell]
+circ :: Shape -> Float
+circ (Circle r) = 2.0 * pi * r
+circ (Rect d h) = 2.0 * (d + h)
+\end{lstlisting}
+Add $circ$ to your C++ or Java implementation. What parts of the
+original code did you have to touch?
+\end{exercise}
+
+\begin{proof}[Solution]
+	~\\
+\begin{lstlisting}[language=C++]
+class Shape {
+public:
+	virtual double area() const = 0;
+	virtual double circ() const = 0;	
+};
+
+class Circle : public Shape {
+   double r;
+public:
+   Circle(double _r): r(_r){}
+   virtual double area() const override{
+     return M_PI*r*r;
+   }
+   virtual double circ() const override{
+     return 2.0*M_PI*r;
+   }
+};
+
+class React : public Shape { 
+   double d,h;
+public:
+   React(double _d, double _h): d(_d), h(_h){}
+   virtual double area() const override{
+	 return h*d;
+   }
+   virtual double circ() const override{
+     return 2.0*(d+h);
+   }
+};
+\end{lstlisting}
+\end{proof}
+
+
+
+\begin{exercise}
+Continuing further: Add a new shape, $Square$, to $Shape$ and make
+all the necessary updates. What code did you have to touch in
+Haskell vs. C++ or Java? (Even if you’re not a Haskell programmer,
+the modifications should be pretty obvious.)
+\end{exercise}
+
+\begin{proof}[Solution]
+Haskell:
+\begin{lstlisting}[language=Haskell]
+data Shape = Circle Float | Rect Float Float | Square Float
+
+area :: Shape -> Float
+area (Circle r) = pi * r * r
+area (Rect d h) = d * h
+area (Square h) = h * h
+
+circ :: Shape -> Float
+circ (Circle r) = 2.0 * pi * r
+circ (Rect d h) = 2.0 * (d + h)
+circ (Square h) = 4.0 * h
+\end{lstlisting}
+C++:
+\begin{lstlisting}[language=C++]
+//Add Square class
+class Square : public Shape { 
+double h;
+public:
+  Square(double _h): h(_h){}
+  virtual double area() const override{
+    return h*h;
+  }
+  virtual double circ() const override{
+    return 4.0*h;
+  }
+};
+\end{lstlisting}
+\end{proof}
+
+
+\begin{exercise}
+Show that $a + a = 2 \times a$ holds for types (up to isomorphism). Remember
+that 2 corresponds to Bool, according to our translation table
+\end{exercise}
+
+\begin{proof}[Solution]
+$a + a$ is equivalent to $Either \ a \ a$ and $2 \times a$ is equivalent to $(Bool, a)$. We can define the following isomorphism between them.
+\begin{lstlisting}[language=Haskell]
+f :: Either a a -> (Bool, a)
+f (Left a) = (True, a)
+f (Right a) = (False, a)
+
+g :: (Bool, a) -> Either a a
+g (True, a) = Left a
+g (False, a) = Right a
+
+\end{lstlisting}
+\end{proof}
+
+
+\chapter[Functors]{Functors\thefootnote}
+
+\begin{exercise}
+Can we turn the $Maybe$ type constructor into a functor by defining:
+\begin{lstlisting}[language=Haskell]
+fmap _ _ = Nothing
+\end{lstlisting}
+which ignores both of its arguments? (Hint: Check the functor
+laws.)
+\end{exercise}
+
+\begin{proof}[Solution]
+No, because it does not preserve the identity.
+\begin{lstlisting}[language=Haskell]
+fmap id (Just a) = Nothing
+id (Just a) = Just a
+\end{lstlisting}
+\end{proof}
+
+\begin{exercise}
+Prove functor laws for the reader functor. Hint: it’s really simple.
+\end{exercise}
+
+
+\begin{proof}[Solution]
+~\\
+\begin{lstlisting}[language=Haskell]
+--Identity
+-- r :: a -> b
+fmap id r = (.) id r = id r
+
+--Composition
+-- f :: a -> b,  g :: b -> c 
+fmap (g.f) r 
+             = (.) (g.f) r 
+             = (g.f).r 
+             = g.(f.r) 
+             = g . (fmap f r) 
+             = fmap g (fmap f r) = ((fmap g) . (fmap f)) r
+\end{lstlisting}
+\end{proof}
+
+
+\begin{exercise}
+Implement the reader functor in your second favorite language (the first being Haskell, of course).
+\end{exercise}
+
+\begin{proof}[Solution]
+~\\
+\begin{lstlisting}[language=C++]
+template<class A, class B, class R>
+B fmap(const std::function<B(A)>& funcA, 
+        const std::function<A(R)>& funcR, R value) {
+         return funcA(funcR(value));
+}
+\end{lstlisting}
+\end{proof}
+
+
+\begin{exercise}
+Prove the functor laws for the list functor. Assume that the laws are true for the tail part of the list you’re applying it to (in other words, use $induction$).
+\end{exercise}
+
+\begin{proof}[Solution]
+using IH to represent Induction  Hypothesis \\
+Base case:  \\
+\hspace*{2cm} $ fmap \ id \ Nil \ =  \ Nil \ = \ id \ Nil$ \\
+\hspace*{2cm} $ fmap \ (f . g) \ Nil \ = \ Nil \ = fmap \ f \ (fmap \ g \ Nil)$ \\
+~\\
+Induction:  \\
+\begin{align*}
+fmap \ id \ (Cons \ x \ tail) &= Cons \ (id \ x) \ (fmap \ id \ tail) \\
+                              &= Cons \ (id \ x) \ (id \ tail) \ \ (by \ IH) \\
+                              &= Cons \ x  \ tail \\ 
+                              &=id \ (Cons \ x \ tail)
+\end{align*}
+\begin{align*}
+fmap \ (f \ . \ g) \ (Cons \ x \ tail) &= Cons \ ((f \ . \ g) x) \ (fmap \ (f \ . \ g) \ tail)   \\
+                                       &= Cons \ ((f \ . \ g) x) \ ((fmap \ f \ . \ fmap \ g) \ tail) \ \ (by \ IH)  \\
+                                        &= Cons \ (f \ (g \ x)) \ (fmap \ f \  ((fmap \ g) \ tail))   \\
+                                       &= fmap \ f \ (Cons \ (g \ x) \ (fmap \ g \ tail))  \\
+                                       &= fmap \ f \ (fmap \ g \ (Cons \ x \ tail))  \\
+                                       &= (fmap \ f \ . \ fmap \ g) \ (Cons \ x \ tail) \\
+\end{align*}
+\end{proof}
+
+
+\chapter[Functoriality]{Functoriality\thefootnote}
+
+\begin{exercise}
+Show that the data type:
+\begin{lstlisting}[language=Haskell]
+data Pair a b = Pair a b
+\end{lstlisting}
+is a bifunctor. For additional credit implement all three methods of $Bifunctor$ and use equational reasoning to show that
+these definitions are compatible with the default implementations whenever they can be applied.
+\end{exercise}
+
+\begin{proof}[Solution]
+~\\
+\begin{lstlisting}[language=Haskell]
+data Pair a b = Pair a b
+
+bimapPair f g (Pair a b) = Pair (f a) (g b)
+firstPair f (Pair a b) = Pair (f a) b
+secondPair g (Pair a b) = Pair a (g b)
+
+--Proof
+bimapPair f g (Pair a b) 
+                   = Pair (f a) (g b)
+                   = firstPair f (Pair a (g b))
+                   = (firstPair f . Second g) (Pair a b) 
+
+firstPair f (Pair a b) 
+                   = Pair (f a) b 
+                   = Pair (f a) (id b) 
+                   = (bimapPair g id) (Pair a b) 
+                   
+secondPair g (Pair a b) 
+                   = Pair a (g b)
+                   = Pair (id a) (g b)
+                   = bimapPair id g (Pair a b)
+\end{lstlisting}
+
+\end{proof}
+
+
+\begin{exercise}
+Show the isomorphism between the standard definition of Maybe
+and this desugaring:
+\begin{lstlisting}[language=Haskell]
+type Maybe' a = Either (Const () a) (Identity a)
+\end{lstlisting}
+Hint: Define two mappings between the two implementations. For additional credit, show that they are the inverse of each other using equational reasoning
+\end{exercise}
+
+\begin{proof}[Solution]
+	~\\
+\begin{lstlisting}[language=Haskell]
+eitherToMaybe :: Maybe' a -> Maybe a
+eitherToMaybe (Left (Const ())) =  Nothing
+eitherToMaybe (Right (Identity a)) =  Just a
+
+maybeToEither :: Maybe a -> Maybe' a
+maybeToEither Nothing = Left (Const ())
+maybeToEither (Just a) = Right (Identity a) 
+
+-- show that they are the inverse of each other using equational reasoning
+(maybeToEither . eitherToMaybe) (Left (Const ())) 
+                   = maybeToEither Nothing
+                   = Left (Const ())
+
+(maybeToEither . eitherToMaybe) (Right (Identity a))
+                   = maybeToEither (Just a)
+                   = Right (Identity a)
+
+(eitherToMaybe . maybeToEither) Nothing
+                   = eitherToMaybe (Left (Const ()))
+                   = Nothing
+
+(eitherToMaybe . maybeToEither) Just a
+                   = eitherToMaybe (Right (Identity a))
+                   = Just a
+\end{lstlisting}
+	
+\end{proof}
+
+
+
+\begin{exercise}
+Let’s try another data structure. I call it a $PreList$ because it’s a precursor to a $List$. It replaces recursion with a type parameter b.
+\begin{lstlisting}[language=Haskell]
+data PreList a b = Nil | Cons a b
+\end{lstlisting}
+You could recover our earlier definition of a $List$ by recursively applying $PreList$ to itself (we’ll see how it’s done when we talk about fixed points). \\
+Show that $PreList$ is an instance of $Bifunctor$.
+\end{exercise}
+
+\begin{proof}[Solution]
+define the $bimap$ for $PreList$
+\begin{lstlisting}[language=Haskell]
+bimap:: (a -> c) -> (b -> d) -> (PreList a b) -> (PreList c d)
+bimap f g Nil = Nil
+bimap f g (Cons a b) = Cons (f a) (g b)
+\end{lstlisting}
+then we prove It satisfy the bifunctor laws.
+\begin{align*}
+	 bimap \ id \ id \ &= \ id  \\     
+	 bimap \ (f \ . \ g) (h \ . \ i) &= (bimap \ f \ h \ . \ bimap \ g \ i)
+\end{align*}
+\begin{lstlisting}[language=Haskell]
+-- equational reasoning
+bimap id id = id (it's obvious)
+
+bimap  (f . g) (h . i) Nil = Nil = (bimap f h . bimap g i) Nil
+bimap  (f . g) (h . i) (Cons a b) 
+                            = Cons ((f . g) a) ((h . i) b) 
+                            = bimap f h (Cons (g a) (i b))
+                            = bimap f h (bimap g i (Cons a b))
+                            = (bimap f h . bimap g i) (Cons a b)
+\end{lstlisting}
+
+\end{proof}
+
+
+\begin{exercise}
+Show that the following data types define bifunctors in a and b:
+\begin{lstlisting}[language=Haskell]
+data K2 c a b = K2 c
+data Fst a b = Fst a
+data Snd a b = Snd b
+\end{lstlisting}
+For additional credit, check your solutions against Conor McBride’s paper  \href{http://strictlypositive.org/CJ.pdf}{Clowns to the Left of me, Jokers to the Right}.
+\end{exercise}
+
+
+\begin{proof}[Solution]
+define the bimap as follow:
+\begin{lstlisting}[language=Haskell]
+instance Bifunctor (K2 c) where
+  bimap _ _ (K2 c) = K2 c
+instance Bifunctor Fst where 
+  bimap f _ (Fst x) = Fst (f x)
+instance Bifunctor Snd where
+  bimap _ g (Snd y) = Snd (g y)
+\end{lstlisting}
+ it's easy to check that they all satisfy bifunctor laws:	
+\begin{align*}
+bimap \ id \ id \ &= \ id  \\     
+bimap \ (f \ . \ g) (h \ . \ i) &= (bimap \ f \ h \ . \ bimap \ g \ i)
+\end{align*}
+\end{proof}
+
+
+
+\begin{exercise}
+Define a bifunctor in a language other than Haskell. Implement $bimap$ for a generic pair in that language
+\end{exercise}
+
+\begin{proof}[Solution]
+~\\
+
+\begin{lstlisting}[language=C++]
+template<template<typename, typename> class F, 
+         class A, class B, class C, class D>
+F<C,D> bimap(std::function<C(A)>, std::function<D(B)>, F<A,B>);
+
+//function Overload
+template<class A, class B, class C, class D>
+std::pair<C, D> bimap(std::function<C(A)> f, 
+                      std::function<D(B)> g, 
+                      std::pair<A,B> p){
+           return std::pair<C,D>(f(p.first), g(p.second));
+}
+\end{lstlisting}
+\end{proof}
+
+\begin{exercise}
+Should $std::map$ be considered a bifunctor or a profunctor in the two template arguments Key and T? How would you redesign this data type to make it so?
+\end{exercise}
+
+\begin{proof}[Solution]
+It should be considered  a profunctor.
+\begin{lstlisting}[language=Haskell]
+-- we can define the map in Haskell
+data Map k t =  Val {get :: k -> Maybe t} 
+
+instance Profunctor Map where
+  dimap f g (Val ktoT) = Val (\a -> fmap g (ktoT (f a)))   
+
+\end{lstlisting}	
+\end{proof}
 
 
 \end{document}
